@@ -1,1 +1,1 @@
-web: python graphing.py
+web: gunicorn app:server

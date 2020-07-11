@@ -1,4 +1,5 @@
 import dash
+import os
 from dash.dependencies import Input, Output
 import dash_table
 import requests
@@ -426,6 +427,7 @@ fig_pie.update_layout(plot_bgcolor='rgba(0,0,0,0)',
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.BOOTSTRAP],
                 external_scripts=['https://use.fontawesome.com/949eaebb83.js'])
+server = app.server
 app.title = 'COVID-19'
 app.layout = html.Div(className='::-webkit-scrollbar',
                       style={'backgroundColor': colors['background'], 'margin': 'auto', 'overflow': 'scroll'},
@@ -533,6 +535,6 @@ def update_table(sort_by):
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
-    #app.run_server(debug=False)
+    #port = int(os.environ.get('PORT', 5000))
+    #app.run(host='0.0.0.0', port=port)
+    app.run_server(debug=False)
