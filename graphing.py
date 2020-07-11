@@ -533,4 +533,5 @@ def update_table(sort_by):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run()
+    #app.run_server(debug=False)
