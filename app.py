@@ -1,5 +1,6 @@
 import dash
 import os
+import json
 from dash.dependencies import Input, Output
 import dash_table
 import requests
@@ -11,7 +12,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 from bs4 import BeautifulSoup
 
-link = 'https://www.mohfw.gov.in/'
+'''link = 'https://www.mohfw.gov.in/'
 req = requests.get(link)
 soup = BeautifulSoup(req.content, "html.parser")
 thead = soup.find_all('thead')[-1]
@@ -33,8 +34,34 @@ for tr in body:
     row = [i.text for i in td]
     body_rows.append(row)
 df_bs = pd.DataFrame(data=body_rows[:len(body_rows) - 6], columns=head_rows[0])
-df_bs.drop('S. No.', axis=1, inplace=True)
-df_India = df_bs.copy()
+df_bs.drop('S. No.', axis=1, inplace=True)'''
+colors = {
+    'background': '#343A40',
+    'text': 'white'
+}
+data = []
+row = []
+r = requests.get('https://www.mohfw.gov.in/data/datanew.json')
+j = json.loads(r.text)
+for i in j:
+    for k in i:
+        row.append(i[k])
+    data.append(row)
+    row = []
+columns = [i for i in j[0]]
+
+df = pd.DataFrame(data, columns=columns)
+df.sno = pd.to_numeric(df.sno, errors='coerce').reset_index()
+df = df.sort_values('sno',)
+df = df.drop(['active','positive','cured','death','sno','state_code'],axis=1)
+df = df.rename(columns={'new_positive':'Total Confirmed cases*',
+                   'new_active':'Active Cases*',
+                   'new_cured':'Cured/Discharged/Migrated*',
+                  'new_death':'Deaths**',
+                       'state_name':'Name of State / UT'})
+df_status = df.iloc[-1].values
+df = df.drop([36,18])
+df_India = df.copy()
 df_India['Total Confirmed cases*'] = df_India['Total Confirmed cases*'].apply(lambda x: int(x))
 df_India['Active Cases*'] = df_India['Active Cases*'].apply(lambda x: int(x))
 df_India['Cured/Discharged/Migrated*'] = df_India['Cured/Discharged/Migrated*'].apply(lambda x: int(x))
@@ -46,15 +73,16 @@ total_confirmed_active_high_to_low = df_India.sort_values('Active Cases*')[::-1]
 total_confirmed_cured_high_to_low = df_India.sort_values('Cured/Discharged/Migrated*')[::-1]
 
 ##################################Grabbing active,cured,death count#####################################################
-stats = soup.find_all(class_='site-stats-count')
+'''stats = soup.find_all(class_='site-stats-count')
 ul_list = stats[0].find_all('ul')[0]
 strong_ls = ul_list.find_all('strong')
 status = []
 for i in strong_ls:
-    status.append(i.text)
-active = status[0]
-cured = status[1]
-deaths = status[2]
+    status.append(i.text)'''
+status = df_status
+active = status[1]
+cured = status[3]
+deaths = status[4]
 
 ####################################Total confirmed cases(Bar plot)#####################################################
 fig = px.bar(data_frame=total_confirmed_cases_high_to_low,
@@ -410,9 +438,9 @@ fig_total_drc.update_layout(plot_bgcolor='rgba(0,0,0,0)',
 #####################################Active,Cured,Death rates(pie chart)################################################
 fig_pie = go.Figure()
 # pie_colors = ['#CCFF00','#0000FF','#FF0033']
-active_ = int(status[0])
-cured_ = int(status[1])
-deaths_ = int(status[2])
+active_ = int(status[1])
+cured_ = int(status[3])
+deaths_ = int(status[4])
 labels = ['Active', 'Cured', 'Deaths']
 values = [active, cured, deaths]
 fig_pie.add_trace(go.Pie(labels=labels,
